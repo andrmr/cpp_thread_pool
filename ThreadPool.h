@@ -74,7 +74,7 @@ public:
 class Queue
 {
     std::function<bool(IRunnable::Ptr, IRunnable::Ptr)> comparer =
-        [](IRunnable::Ptr left, IRunnable::Ptr right) { return left->priority > right->priority; };
+        [](IRunnable::Ptr left, IRunnable::Ptr right) { return left->priority < right->priority; };
 
     std::priority_queue<IRunnable::Ptr, std::deque<IRunnable::Ptr>, decltype(comparer)> m_tasks {comparer};
     std::mutex m_mutex;
