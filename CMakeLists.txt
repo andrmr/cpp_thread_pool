@@ -3,4 +3,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 project(cpp_thread_pool)
 add_executable(${PROJECT_NAME} "Test.cpp" "ThreadPool.h")
-target_link_libraries(${PROJECT_NAME} -pthread)
+
+find_package(Threads)
+target_link_libraries(${PROJECT_NAME} Threads::Threads)
