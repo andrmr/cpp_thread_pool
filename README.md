@@ -1,10 +1,10 @@
 # cpp_thread_pool
 Thread pool written in C++ 14
 
-Manages a given number of threads and queues tasks based on priority.
+Manages a given number of threads and runs a task queue.
 
 TODO:
- - fix the condition_variable check bug
+ - create tests
  - cleanup and comments
- - proper tests
- - C++ 17 features, if applicable
+ - improve flexibility
+ - implement C++ 17 features
