@@ -1,30 +1,29 @@
 #include "ThreadPool.h"
-
 #include <iostream>
 
-using namespace TP;
-using namespace TP::details;
-
-int func(int b)
+int func1(int x)
 {
-    std::cout << "From func";
-    return b;
+    std::cout << __PRETTY_FUNCTION__ << " on thread: " << std::this_thread::get_id() << "\n";
+    return x;
 }
 
-//template <typename Callable, typename... Args>
-//void runTask(Priority priority, Callable&& c, Args&&... args)
-//{
-//    auto runnable = Runnable<Callable, Args...>(priority, std::forward<Callable>(c), std::forward<Args>(args)...);
-//    runnable.run();
-//}
+int func2(uint32_t x,  uint16_t y, uint8_t z)
+{
+    std::cout << __PRETTY_FUNCTION__ << " on thread: " << std::this_thread::get_id() << "\n";
+    return (x + y + z);
+}
 
 int main()
 {
-    int b = 1;
-
     TP::ThreadPool tp;
-    auto f = tp.addTask(func, b);
-    f.get();
 
+
+    auto f1 = tp.addTask(func1, 9);
+
+    uint16_t y = 5;
+    auto f2 = tp.addTask(func2, 10, y, 5);
+
+    f1.get();
+    f2.get();
     return 0;
 }
