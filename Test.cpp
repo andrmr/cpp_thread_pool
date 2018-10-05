@@ -16,15 +16,20 @@ uint32_t func2(uint32_t x, uint16_t y, uint8_t z)
 
 int main()
 {
-    TP::ThreadPool tp;
+    TP::ThreadPool tp (std::thread::hardware_concurrency());
 
-    auto f1 = tp.addTask(func1<uint32_t>, 9u);
+    std::vector<std::future<uint32_t>> futures;
 
-    uint16_t y = 5;
-    auto f2 = tp.addTask(func2, 10, y, 5);
+    for (size_t i = 0; i < 100; ++i)
+    {
+        futures.push_back(tp.addTask(func2, i, i+1, i+2));
+    }
 
-    f1.get();
-    f2.get();
+    for (auto&& f: futures)
+    {
+        f.get();
+    }
 
+    tp.stop();
     return 0;
 }

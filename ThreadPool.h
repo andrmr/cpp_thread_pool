@@ -14,9 +14,11 @@ namespace TP {
 enum class Priority
 {
     URGENT = 0,
-    HIGH   = 1,
-    MEDIUM = 2,
-    LOW    = 3
+    HIGH,
+    MEDIUM,
+    LOW,
+
+    DEFAULT = LOW
 };
 
 namespace details {
@@ -28,7 +30,7 @@ struct IRunnable
     virtual void run()   = 0;
     virtual ~IRunnable() = default;
 
-    explicit IRunnable(Priority priority = Priority::LOW)
+    explicit IRunnable(Priority priority = Priority::DEFAULT)
         : priority{priority} {}
 
     Priority priority;
@@ -78,6 +80,7 @@ class Queue
 
     std::priority_queue<IRunnable::Ptr, std::deque<IRunnable::Ptr>, decltype(comparer)> m_tasks {comparer};
     std::mutex m_mutex;
+    std::mutex m_condition_mutex;
     std::condition_variable m_condition;
     std::atomic_bool m_continue {true};
 
@@ -120,13 +123,13 @@ public:
 
     auto run()
     {
-        while (true)
+        while (m_continue)
         {
-            std::unique_lock<std::mutex> g(m_mutex);
-            m_condition.wait(g, [this] { return !empty(); }); /// @todo fix this deadlock
+            std::unique_lock<std::mutex> g(m_condition_mutex);
+            m_condition.wait(g, [this] { return !empty() || !m_continue; });
             g.unlock();
 
-            if (m_continue)
+            if (!empty())
             {
                 auto task = dequeue();
                 task->run();
@@ -163,7 +166,7 @@ public:
     template <typename Callable, typename... Args>
     auto addTask(Callable&& c, Args&&... args)
     {
-        return addTask(Priority::LOW, std::forward<Callable>(c), std::forward<Args>(args)...);
+        return addTask(Priority::DEFAULT, std::forward<Callable>(c), std::forward<Args>(args)...);
     }
 
     auto stop()
@@ -173,11 +176,6 @@ public:
         {
             t.join();
         }
-    }
-
-    ~ThreadPool()
-    {
-        stop();
     }
 };
 
