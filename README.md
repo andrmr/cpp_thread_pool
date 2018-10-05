@@ -1,10 +1,10 @@
 # cpp_thread_pool
 Thread pool written in C++ 14
 
-Manages a given number of threads and runs a task queue.
+Runs queued tasks on a given number of reusable threads.
 
-TODO:
- - create tests
+#### TODO:
+ - create more tests or move to a UT framework
+ - improve flexibility i.e. overloads, dynamic resizing, move away from bind
  - cleanup and comments
- - improve flexibility
- - implement C++ 17 features
+ - migrate to C++ 17 features
