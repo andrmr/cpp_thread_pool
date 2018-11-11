@@ -174,7 +174,7 @@ public:
         m_queue.stop();
         for (auto& t : m_threads)
         {
-            t.join();
+            if (t.joinable()) t.join();
         }
     }
 };
