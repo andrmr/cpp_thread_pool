@@ -27,7 +27,7 @@ for (size_t i = 0; i < 1000; ++i) {
 
 // get the results from the returned std::futures
 for (auto i: integers) {
-    i.get();
+    std::cout << i.get() << '\n';
 }
 
 tp.stop();
