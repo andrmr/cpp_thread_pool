@@ -1,33 +1,29 @@
 #include "ThreadPool.h"
+
 #include <iostream>
+#include <sstream>
+#include <string>
 
-template <typename T>
-T func1(T x)
+std::string func(int a, int b, int c)
 {
-    std::cout << __PRETTY_FUNCTION__ << " on thread: " << std::this_thread::get_id() << "\n";
-    return x;
-}
-
-uint32_t func2(uint32_t x, uint16_t y, uint8_t z)
-{
-    std::cout << __PRETTY_FUNCTION__ << " on thread: " << std::this_thread::get_id() << "\n";
-    return (x + y + z);
+    std::stringstream out;
+    out << __FUNCTION__ << " on thread " << std::this_thread::get_id() << " \tResult: " << a + b + c;
+    return out.str();
 }
 
 int main()
 {
-    TP::ThreadPool tp (std::thread::hardware_concurrency());
+    TP::ThreadPool tp(std::thread::hardware_concurrency());
 
-    std::vector<std::future<uint32_t>> futures;
-
+    std::vector<std::future<std::string>> futures;
     for (size_t i = 0; i < 100; ++i)
     {
-        futures.push_back(tp.addTask(func2, i, i+1, i+2));
+        futures.push_back(tp.addTask(func, i, i + 1, i + 2));
     }
 
-    for (auto&& f: futures)
+    for (auto& f: futures)
     {
-        f.get();
+        std::cout << f.get() << '\n';
     }
 
     tp.stop();

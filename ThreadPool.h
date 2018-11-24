@@ -31,7 +31,9 @@ struct IRunnable
     virtual ~IRunnable() = default;
 
     explicit IRunnable(Priority priority = Priority::DEFAULT)
-        : priority{priority} {}
+        : priority {priority}
+    {
+    }
 
     Priority priority;
 };
@@ -43,7 +45,7 @@ template <typename T>
 using result_of_t = typename std::result_of<T>::type;
 
 template <typename Callable, typename... Args>
-class Runnable : public IRunnable
+class Runnable: public IRunnable
 {
     using result_t = result_of_t<decay_t<Callable>(decay_t<Args>...)>;
     std::packaged_task<result_t()> m_task; // result of std::bind; otherwise result_t(decay_t<Args>...)
@@ -53,12 +55,12 @@ public:
 
     Runnable(Priority priority, Callable&& c, Args&&... args)
         : IRunnable(priority),
-          m_task{std::bind(std::forward<Callable>(c), std::forward<Args>(args)...)}
+          m_task {std::bind(std::forward<Callable>(c), std::forward<Args>(args)...)}
     {
     }
 
     explicit Runnable(Callable&& c, Args&&... args)
-        : m_task{std::bind(std::forward<Callable>(c), std::forward<Args>(args)...)}
+        : m_task {std::bind(std::forward<Callable>(c), std::forward<Args>(args)...)}
     {
     }
 
@@ -100,22 +102,13 @@ public:
         return future;
     }
 
-    auto dequeue()
-    {
-        std::lock_guard<std::mutex> g(m_mutex);
-        auto task = m_tasks.top();
-        m_tasks.pop();
-
-        return task;
-    }
-
-    auto empty()
+    auto empty() noexcept -> bool
     {
         std::lock_guard<std::mutex> g(m_mutex);
         return m_tasks.empty();
     }
 
-    auto stop()
+    auto stop() noexcept
     {
         m_continue = false;
         m_condition.notify_all();
@@ -125,13 +118,18 @@ public:
     {
         while (m_continue)
         {
-            std::unique_lock<std::mutex> g(m_condition_mutex);
-            m_condition.wait(g, [this] { return !empty() || !m_continue; });
-            g.unlock();
+            std::unique_lock<std::mutex> lk {m_condition_mutex};
+            m_condition.wait(lk, [this] { return !empty() || !m_continue; });
+            lk.unlock();
 
-            if (!empty())
+            std::unique_lock<std::mutex> g {m_mutex};
+            if (!m_tasks.empty())
             {
-                auto task = dequeue();
+                auto task = m_tasks.top();
+                m_tasks.pop();
+                g.unlock();
+
+                m_condition.notify_one();
                 task->run();
             }
         }
@@ -151,7 +149,7 @@ public:
     explicit ThreadPool(unsigned int maxThreads = 1)
         : m_threads(std::min(maxThreads, std::thread::hardware_concurrency()))
     {
-        for (auto& t : m_threads)
+        for (auto& t: m_threads)
         {
             t = std::move(std::thread(&details::Queue::run, &m_queue));
         }
@@ -172,11 +170,12 @@ public:
     auto stop()
     {
         m_queue.stop();
-        for (auto& t : m_threads)
+        for (auto& t: m_threads)
         {
-            if (t.joinable()) t.join();
+            if (t.joinable())
+                t.join();
         }
     }
 };
 
-}  // namespace TP
+} // namespace TP
