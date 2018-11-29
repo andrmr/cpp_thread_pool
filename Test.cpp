@@ -15,7 +15,7 @@ std::string func(int a, int b, int c)
 template <typename... Args>
 constexpr auto sum(Args&&... args) -> typename std::common_type<Args...>::type
 {
-	return (args + ...);
+    return (args + ...);
 }
 
 int main()
@@ -28,20 +28,20 @@ int main()
         futures.push_back(tp.addTask(func, i, i + 1, i + 2));
     }
 
-	for (auto& f : futures)
-	{
-		std::cout << f.get() << '\n';
-	}
+    for (auto& f: futures)
+    {
+        std::cout << f.get() << '\n';
+    }
 
-	auto simpleSumL = [](auto&&... args) {
-		std::cout << "From lambda: " << sum(std::forward<decltype(args)>(args)...) << '\n';
-	};
+    auto simpleSumL = [](auto&&... args) {
+        std::cout << "From lambda: " << sum(std::forward<decltype(args)>(args)...) << '\n';
+    };
 
-	auto f = tp.addTask(simpleSumL, 1, 2, 3.5);
-	f.get();
+    auto f = tp.addTask(simpleSumL, 1, 2, 3.5);
+    f.get();
 
-	tp.stop();
+    tp.stop();
 
-	system("pause");
+    system("pause");
     return 0;
 }

@@ -45,11 +45,11 @@ template <typename Callable, typename... Args>
 class Runnable: public IRunnable
 {
 public:
-	using result_t = typename std::invoke_result<decay_t<Callable>, decay_t<Args>...>::type;
-    
+    using result_t = typename std::invoke_result<decay_t<Callable>, decay_t<Args>...>::type;
+
     explicit Runnable(Priority priority, Callable&& c, Args&&... args)
-		: IRunnable {priority},
-		m_task {[&c, &args...] { return c(std::forward<Args>(args)...); }} // captures by &&
+        : IRunnable {priority},
+          m_task {[&c, &args...] { return c(std::forward<Args>(args)...); }} // captures by &&
     {
     }
 
@@ -69,7 +69,7 @@ public:
     }
 
 private:
-	std::packaged_task<result_t()> m_task;
+    std::packaged_task<result_t()> m_task;
 };
 
 class Queue
@@ -90,7 +90,7 @@ public:
         auto runnable = std::make_shared<Runnable<Callable, Args...>>(priority, std::forward<Callable>(c), std::forward<Args>(args)...);
 
         {
-			std::lock_guard g {m_mutex};
+            std::lock_guard g {m_mutex};
             m_tasks.push(runnable);
         }
 
@@ -100,7 +100,7 @@ public:
 
     auto empty() noexcept -> bool
     {
-		std::lock_guard g {m_mutex};
+        std::lock_guard g {m_mutex};
         return m_tasks.empty();
     }
 
@@ -132,7 +132,7 @@ public:
     }
 };
 
-} // namespace details
+} // namespace impl
 
 /// Manages a given number of threads and runs a task queue.
 /// The number of threads is limited to maximum hardware threads.
@@ -143,7 +143,7 @@ class ThreadPool
 
 public:
     explicit ThreadPool(unsigned int maxThreads = std::thread::hardware_concurrency())
-		: m_threads {maxThreads}
+        : m_threads {maxThreads}
     {
         for (auto& t: m_threads)
         {
@@ -168,10 +168,10 @@ public:
         m_queue.stop();
         for (auto& t: m_threads)
         {
-			if (t.joinable())
-			{
-				t.join();
-			}
+            if (t.joinable())
+            {
+                t.join();
+            }
         }
     }
 };
