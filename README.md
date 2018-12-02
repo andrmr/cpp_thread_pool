@@ -5,34 +5,42 @@ Runs queued tasks on a given number of reusable threads.
 
 #### Usage:
 ```cpp
-TP::ThreadPool tp;
+#include "ThreadPool.h"
 
-// regular function
-std::string func(int a, int b, int c);
+#include <iostream>
 
-std::vector<std::future<std::string>> futures;
-for (int i = 0; i < 100; ++i) {
-    futures.push_back(tp.addTask(func, i, i + 1, i + 2));
+auto free_func(int a, int b, int c) {
+    return a + b + c;
 }
 
-for (auto& f: futures) {
-    std::cout << f.get() << '\n';
-}
-
-// function templates must be wrapped in lambdas
-template <typename... Args>
-constexpr auto sum(Args&&... args) -> typename std::common_type<Args...>::type {
-	return (args + ...);
-}
-
-auto wrapSum = [](auto&&... args) {
-	return sum(std::forward<decltype(args)>(args)...);
+auto lambda_func = [](auto&&... args) -> typename std::common_type<decltype(args)...>::type {
+    return (args + ...);
 };
 
-auto f = tp.addTask(sum, 1, 2, 3.5f);
-std::cout << f.get();
+struct Pod {
+    auto mem_func(int a, int b, int c)
+    {
+        return a + b + c;
+    }
+};
 
-tp.stop();
+int main() {
+    TP::ThreadPool tp(std::thread::hardware_concurrency());
+
+    // queue free function
+    auto f = tp.addTask(free_func, 1, 2, 3);
+
+    // queue variadic lambda or template wrapper
+    auto g = tp.addTask(lambda_func, 1, 2, 3.5);
+
+    // queue member function
+    auto h = tp.addTask(std::mem_fn(&Pod::mem_func), Pod {}, 1, 2, 3);
+
+    std::cout << f.get() << '\n' << g.get() << '\n' << h.get() << '\n';
+
+    tp.stop();
+    return 0;
+}
 ```
 
 #### TODO:
