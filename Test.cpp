@@ -1,47 +1,42 @@
 #include "ThreadPool.h"
 
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <thread>
 
-std::string func(int a, int b, int c)
+auto free_func(int a, int b, int c)
 {
-    std::stringstream out;
-    out << __FUNCTION__ << " on thread " << std::this_thread::get_id() << " \tResult: " << a + b + c;
-    return out.str();
+    return a + b + c;
 }
 
-template <typename... Args>
-constexpr auto sum(Args&&... args) -> typename std::common_type<Args...>::type
+auto lambda_func = [](auto&&... args) -> typename std::common_type<decltype(args)...>::type
 {
     return (args + ...);
-}
+};
+
+struct Pod
+{
+    auto mem_func(int a, int b, int c)
+    {
+        return a + b + c;
+    }
+};
 
 int main()
 {
     TP::ThreadPool tp(std::thread::hardware_concurrency());
 
-    std::vector<std::future<std::string>> futures;
-    for (int i = 0; i < 100; ++i)
-    {
-        futures.push_back(tp.addTask(func, i, i + 1, i + 2));
-    }
+    // queue free function
+    auto f = tp.addTask(free_func, 1, 2, 3);
 
-    for (auto& f: futures)
-    {
-        std::cout << f.get() << '\n';
-    }
+    // queue variadic lambda or template wrapper
+    auto g = tp.addTask(lambda_func, 1, 2, 3.5);
 
-    auto simpleSumL = [](auto&&... args) {
-        std::cout << "From lambda: " << sum(std::forward<decltype(args)>(args)...) << '\n';
-    };
+    // queue member function
+    auto h = tp.addTask(std::mem_fn(&Pod::mem_func), Pod {}, 1, 2, 3);
 
-    auto f = tp.addTask(simpleSumL, 1, 2, 3.5);
-    f.get();
+    std::cout << f.get() << '\n'
+              << g.get() << '\n'
+              << h.get() << '\n';
 
     tp.stop();
-
-    system("pause");
     return 0;
 }
