@@ -18,8 +18,7 @@ auto lambda_func = [](auto&&... args) -> typename std::common_type<decltype(args
 };
 
 struct Pod {
-    auto mem_func(int a, int b, int c)
-    {
+    auto mem_func(int a, int b, int c) {
         return a + b + c;
     }
 };
